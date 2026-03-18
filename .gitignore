@@ -1,0 +1,91 @@
+# Sistema de Rendiciones - .gitignore
+
+# Entorno virtual
+venv/
+env/
+ENV/
+.venv
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+
+# Archivos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Archivos subidos
+uploads/
+!uploads/.gitkeep
+
+# Base de datos
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+
+# Archivos de sistema
+Thumbs.db
+desktop.ini
+
+# PyInstaller
+*.spec
+
+# Backups
+*.bak
+*.backup
+
+# Archivos temporales
+tmp/
+temp/
+*.tmp
+
+# Configuración local
+instance/
+.webassets-cache
+
+# Flask
+.flask_session/
+flask_session/
+
+# Pytest
+.pytest_cache/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Documentos sensibles
+*.pem
+*.key
+*.crt
+*.p12
