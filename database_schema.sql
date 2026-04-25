@@ -1,7 +1,7 @@
--- ================================================
+
 -- SISTEMA DE RENDICIONES - ESTRUCTURA DE BASE DE DATOS
 -- MySQL / MariaDB
--- ================================================
+
 
 -- Crear base de datos
 CREATE DATABASE IF NOT EXISTS sistema_rendiciones
@@ -9,9 +9,8 @@ CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 USE rendiciones_user;
 
--- ================================================
 -- TABLA: usuarios
--- ================================================
+
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -46,9 +45,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
     INDEX idx_activo (activo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ================================================
+
 -- TABLA: rendiciones
--- ================================================
 CREATE TABLE IF NOT EXISTS rendiciones (
     id INT AUTO_INCREMENT PRIMARY KEY,
     numero_rendicion VARCHAR(50) NOT NULL UNIQUE,
@@ -91,9 +89,7 @@ CREATE TABLE IF NOT EXISTS rendiciones (
     INDEX idx_fecha_creacion (fecha_creacion)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ================================================
 -- TABLA: items_rendicion
--- ================================================
 CREATE TABLE IF NOT EXISTS items_rendicion (
     id INT AUTO_INCREMENT PRIMARY KEY,
     rendicion_id INT NOT NULL,
@@ -128,9 +124,7 @@ CREATE TABLE IF NOT EXISTS items_rendicion (
     INDEX idx_tipo_gasto (tipo_gasto)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ================================================
 -- TABLA: notificaciones
--- ================================================
 CREATE TABLE IF NOT EXISTS notificaciones (
     id INT AUTO_INCREMENT PRIMARY KEY,
     usuario_id INT NOT NULL,
@@ -159,9 +153,7 @@ CREATE TABLE IF NOT EXISTS notificaciones (
     INDEX idx_fecha_creacion (fecha_creacion)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ================================================
 -- DATOS INICIALES
--- ================================================
 
 -- Usuario Administrador por defecto
 -- Email: admin@primar.cl
@@ -203,9 +195,7 @@ VALUES
     'Ejecutivo de Ventas'
 ) ON DUPLICATE KEY UPDATE email=email;
 
--- ================================================
 -- VISTAS ÚTILES
--- ================================================
 
 -- Vista de resumen de rendiciones por usuario
 CREATE OR REPLACE VIEW vista_resumen_rendiciones AS
@@ -233,9 +223,7 @@ SELECT
 FROM usuarios u
 LEFT JOIN rendiciones r ON u.id = r.usuario_id;
 
--- ================================================
 -- PROCEDIMIENTOS ALMACENADOS
--- ================================================
 
 DELIMITER //
 
@@ -276,9 +264,7 @@ END //
 
 DELIMITER ;
 
--- ================================================
 -- TRIGGERS (Opcional)
--- ================================================
 
 DELIMITER //
 
@@ -323,26 +309,20 @@ END //
 
 DELIMITER ;
 
--- ================================================
 -- ÍNDICES ADICIONALES PARA OPTIMIZACIÓN
--- ================================================
 
 -- Índices compuestos para consultas frecuentes
 CREATE INDEX idx_rendiciones_usuario_estado ON rendiciones(usuario_id, estado);
 CREATE INDEX idx_rendiciones_estado_fecha ON rendiciones(estado, fecha_creacion);
 CREATE INDEX idx_notificaciones_usuario_leida ON notificaciones(usuario_id, leida);
 
--- ================================================
 -- PERMISOS (Ajustar según necesidad)
--- ================================================
 
 -- Crear usuario de aplicación (ejemplo)
 -- CREATE USER 'rendiciones_app'@'localhost' IDENTIFIED BY 'password_seguro';
 -- GRANT SELECT, INSERT, UPDATE, DELETE ON rendiciones_primar.* TO 'rendiciones_app'@'localhost';
 -- FLUSH PRIVILEGES;
 
--- ================================================
 -- FIN DEL SCRIPT
--- ================================================
 
 SELECT 'Base de datos creada exitosamente' AS Mensaje;

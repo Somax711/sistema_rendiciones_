@@ -7,6 +7,24 @@ from utils.filters import register_filters
 from routes.download import download_bp
 
 
+def _seed_demo_user():
+    """Crea el usuario demo si no existe"""
+    demo = User.query.filter_by(email='demo@primar.cl').first()
+    if not demo:
+        demo = User(
+            nombre='Usuario Demo',
+            email='demo@primar.cl',
+            rol='usuario',
+            activo=True,
+            email_verificado=True,
+            departamento='Demo',
+            cargo='Visitante Demo'
+        )
+        demo.set_password('Demo_Pass_2025!')
+        db.session.add(demo)
+        db.session.commit()
+
+
 def create_app():
     """Factory para crear la aplicación Flask"""
     app = Flask(__name__)
@@ -15,7 +33,7 @@ def create_app():
     config = get_config()
     app.config.from_object(config)
 
-    # Base de datos — Railway inyecta DATABASE_URL 
+    # Base de datos
     db_url = os.environ.get("DATABASE_URL", "sqlite:///rendiciones.db")
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
@@ -76,7 +94,7 @@ def create_app():
             'app_name': 'Sistema de Rendiciones Primar'
         }
 
-    #  Ruta temporal para crear admin en producción 
+    # Ruta temporal para crear admin en producción
     @app.route('/setup-admin-primar')
     def setup_admin():
         try:
@@ -92,15 +110,18 @@ def create_app():
                 admin.set_password('Admin123!')
                 db.session.add(admin)
                 db.session.commit()
-                return 'Admin creado OK — email: admin@primar.cl / clave: Admin123!'
+                resultado = 'Admin creado OK'
             else:
                 admin.set_password('Admin123!')
                 db.session.commit()
-                return 'Contrasena reseteada OK — email: admin@primar.cl / clave: Admin123!'
+                resultado = 'Contrasena reseteada OK'
+
+            _seed_demo_user()
+            return f'{resultado} — email: admin@primar.cl / clave: Admin123!'
         except Exception as e:
             return f'Error: {str(e)}'
 
-    #  Ruta principal 
+    # Ruta principal
     @app.route('/')
     def index():
         if current_user.is_authenticated:
@@ -112,6 +133,7 @@ def create_app():
     def init_db():
         """Inicializa la base de datos"""
         db.create_all()
+        _seed_demo_user()
         print('Base de datos inicializada correctamente')
 
     # Comando CLI para crear admin

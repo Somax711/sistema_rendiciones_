@@ -109,6 +109,16 @@
         </div>
     </nav>
     {% endif %}
+    {% if session.get('demo_mode') %}
+<div class="alert alert-info alert-dismissible text-center mb-0 py-2 rounded-0 border-0"
+     style="font-size: 0.85rem; background: #e8f4fd; border-bottom: 2px solid #0dcaf0 !important;">
+    <i class="bi bi-info-circle-fill me-1"></i>
+    <strong>Modo Demo</strong> — Estás viendo datos de ejemplo. Las acciones de escritura están deshabilitadas.
+    <a href="{{ url_for('auth.logout') }}" class="ms-3 text-decoration-none">
+        <i class="bi bi-box-arrow-right"></i> Salir del demo
+    </a>
+</div>
+{% endif %}
     
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}

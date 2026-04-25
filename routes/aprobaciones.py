@@ -1,13 +1,14 @@
+from asyncio import current_task
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from models import db, Rendicion, Notificacion
-from utils.decorators import permission_required
-
+from utils.decorators import demo_readonly, permission_required
 aprobaciones_bp = Blueprint('aprobaciones', __name__, url_prefix='/aprobaciones')
 
 
 @aprobaciones_bp.route('/')
 @login_required
+@demo_readonly 
 @permission_required('aprobador')
 def index():
     """Lista de rendiciones pendientes de aprobación"""
@@ -24,21 +25,20 @@ def index():
     query = query.order_by(Rendicion.fecha_envio.desc())
     
     # Paginar
-    from flask import current_app
     pagination = query.paginate(
         page=page,
-        per_page=current_app.config['ITEMS_PER_PAGE'],
+        per_page=current_task.config['ITEMS_PER_PAGE'],
         error_out=False
     )
-    
+  
     return render_template('aprobaciones/index.html',
                          rendiciones=pagination.items,
                          pagination=pagination,
                          estado=estado)
 
-
 @aprobaciones_bp.route('/<int:id>/revisar')
 @login_required
+@demo_readonly 
 @permission_required('aprobador')
 def revisar(id):
     """Revisar rendición para aprobar/rechazar"""
@@ -86,6 +86,7 @@ def aprobar(id):
 
 @aprobaciones_bp.route('/<int:id>/rechazar', methods=['POST'])
 @login_required
+@demo_readonly 
 @permission_required('aprobador')
 def rechazar(id):
     """Rechazar rendición"""
@@ -115,7 +116,6 @@ def rechazar(id):
         flash(f'Error al rechazar la rendición: {str(e)}', 'error')
     
     return redirect(url_for('aprobaciones.index'))
-
 
 @aprobaciones_bp.route('/historial')
 @login_required
@@ -148,3 +148,4 @@ def historial():
                          rendiciones=pagination.items,
                          pagination=pagination,
                          estado=estado)
+    

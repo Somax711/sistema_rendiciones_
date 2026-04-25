@@ -96,10 +96,11 @@ class User(UserMixin, db.Model):
     
     def get_notificaciones_no_leidas(self):
         """Obtiene el conteo de notificaciones no leídas"""
+        from models.notificacion import Notificacion   
         return Notificacion.query.filter_by(
-            usuario_id=self.id,
-            leida=False
-        ).count()
+        usuario_id=self.id,
+        leida=False
+    ).count()
     
     def __repr__(self):
         return f'<User {self.email}>'

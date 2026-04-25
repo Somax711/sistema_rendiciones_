@@ -12,12 +12,11 @@ dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 def index():
     """Dashboard principal según rol del usuario"""
     if current_user.is_admin():
-        return render_template('dashboard/admin.html', stats=get_admin_stats())
+        return render_template('dashboard/usuario.html', stats=get_usuario_stats())
     elif current_user.is_aprobador():
-        return render_template('dashboard/aprobador.html', stats=get_aprobador_stats())
+        return render_template('dashboard/usuario.html', stats=get_usuario_stats())
     else:
         return render_template('dashboard/usuario.html', stats=get_usuario_stats())
-
 
 def get_admin_stats():
     """Estadísticas para el dashboard de admin"""
@@ -64,7 +63,7 @@ def get_admin_stats():
     top_usuarios = db.session.query(
         User.nombre,
         func.sum(Rendicion.monto_total).label('total')
-    ).join(Rendicion).filter(
+    ).join(Rendicion, Rendicion.usuario_id == User.id).filter(
         Rendicion.estado.in_(['aprobada', 'pagada'])
     ).group_by(User.id).order_by(func.sum(Rendicion.monto_total).desc()).limit(5).all()
     
@@ -185,7 +184,7 @@ def get_usuario_stats():
     gastos_por_tipo = db.session.query(
         ItemRendicion.tipo_gasto,
         func.sum(ItemRendicion.monto).label('total')
-    ).join(Rendicion).filter(
+    ).join(Rendicion, Rendicion.id == ItemRendicion.rendicion_id).filter(
         Rendicion.usuario_id == current_user.id,
         Rendicion.fecha_creacion >= tres_meses_atras
     ).group_by(ItemRendicion.tipo_gasto).all()

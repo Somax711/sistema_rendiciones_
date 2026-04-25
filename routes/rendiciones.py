@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from models import db, Rendicion, ItemRendicion, Notificacion
-from utils.decorators import permission_required
+from utils.decorators import permission_required, demo_readonly
 
 rendiciones_bp = Blueprint('rendiciones', __name__, url_prefix='/rendiciones')
 
@@ -17,6 +17,7 @@ def allowed_file(filename):
 
 @rendiciones_bp.route('/')
 @login_required
+@demo_readonly 
 def index():
     """Listar rendiciones"""
     page = request.args.get('page', 1, type=int)
@@ -52,6 +53,8 @@ def index():
         error_out=False
     )
     
+
+    
     return render_template('rendiciones/index.html', 
                          rendiciones=pagination.items,
                          pagination=pagination,
@@ -61,6 +64,7 @@ def index():
 
 @rendiciones_bp.route('/crear', methods=['GET', 'POST'])
 @login_required
+@demo_readonly 
 def crear():
     """Crear nueva rendición"""
     if request.method == 'POST':
@@ -156,6 +160,7 @@ def crear():
 
 @rendiciones_bp.route('/<int:id>')
 @login_required
+@demo_readonly 
 def ver(id):
     """Ver detalle de una rendición"""
     rendicion = Rendicion.query.get_or_404(id)
@@ -170,8 +175,9 @@ def ver(id):
 
 
 
-@rendiciones_bp.route('/<int:id>')
+@rendiciones_bp.route('/<int:id>/detalle')
 @login_required
+@demo_readonly 
 def detalle(id):
     """Ver detalle de rendición"""
     rendicion = Rendicion.query.get_or_404(id)
@@ -190,6 +196,7 @@ def detalle(id):
 
 @rendiciones_bp.route('/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
+@demo_readonly 
 def editar(id):
     """Editar rendición"""
     rendicion = Rendicion.query.get_or_404(id)
@@ -225,6 +232,7 @@ def editar(id):
 
 @rendiciones_bp.route('/<int:id>/eliminar', methods=['POST'])
 @login_required
+@demo_readonly 
 def eliminar(id):
     """Eliminar rendición"""
     rendicion = Rendicion.query.get_or_404(id)
@@ -259,6 +267,7 @@ def eliminar(id):
 
 @rendiciones_bp.route('/<int:id>/enviar', methods=['POST'])
 @login_required
+@demo_readonly 
 def enviar(id):
     """Enviar rendición a revisión"""
     rendicion = Rendicion.query.get_or_404(id)
@@ -285,6 +294,7 @@ def enviar(id):
 
 @rendiciones_bp.route('/comprobante/<filename>')
 @login_required
+@demo_readonly 
 def ver_comprobante(filename):
     """Ver archivo de comprobante"""
     filepath = os.path.join(
@@ -302,6 +312,7 @@ def ver_comprobante(filename):
 
 @rendiciones_bp.route('/<int:id>/items/agregar', methods=['POST'])
 @login_required
+@demo_readonly 
 def agregar_item(id):
     """Agregar item a rendición existente"""
     rendicion = Rendicion.query.get_or_404(id)
@@ -353,6 +364,7 @@ def agregar_item(id):
 
 @rendiciones_bp.route('/items/<int:id>/eliminar', methods=['POST'])
 @login_required
+@demo_readonly 
 def eliminar_item(id):
     """Eliminar item de rendición"""
     item = ItemRendicion.query.get_or_404(id)

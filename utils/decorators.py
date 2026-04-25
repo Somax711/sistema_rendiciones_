@@ -1,7 +1,5 @@
 from functools import wraps
-from flask import flash, redirect, url_for, abort
-from flask_login import current_user
-
+from flask import flash, redirect, url_for, abort, session, request
 
 def admin_required(f):
     """Decorador que requiere que el usuario sea administrador"""
@@ -88,3 +86,19 @@ def role_required(roles):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+
+
+def demo_readonly(f):
+    """
+    Bloquea cualquier acción de escritura (POST/PUT/DELETE/PATCH)
+    cuando la sesión está en modo demo.
+    Úsalo en TODAS las rutas de creación, edición y eliminación.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('demo_mode') and request.method != 'GET':
+            flash('⚠️ Modo demo: esta acción no está disponible.', 'warning')
+            return redirect(request.referrer or url_for('dashboard.index'))
+        return f(*args, **kwargs)
+    return decorated_function

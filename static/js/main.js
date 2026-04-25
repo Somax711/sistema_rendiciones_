@@ -3,6 +3,12 @@
 $(document).ready(function() {
     // Inicializar tooltips
     initTooltips();
+
+    //Entrar a la app en modo demo
+    function loginDemo() {
+  document.querySelector('input[name="email"]').value = 'demo@primar.cl';
+  document.querySelector('input[name="password"]').value = 'demo123';
+    }
     
     // Cargar notificaciones
     loadNotifications();
@@ -20,7 +26,7 @@ $(document).ready(function() {
     setupImagePreviews();
 });
 
-// Inicializar tooltips de Bootstrap
+//  Tooltips de Bootstrap
 function initTooltips() {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {

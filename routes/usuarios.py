@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
-from models import db, User
-from utils.decorators import admin_required
+from models import db, User, Rendicion
+from utils.decorators import admin_required, demo_readonly
+import sqlalchemy
 
 usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/usuarios')
 
@@ -9,12 +10,13 @@ usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/usuarios')
 @usuarios_bp.route('/')
 @login_required
 @admin_required
+@demo_readonly 
 def index():
     """Lista de usuarios"""
-    page = request.args.get('page', 1, type=int)
-    rol = request.args.get('rol')
-    activo = request.args.get('activo')
-    buscar = request.args.get('buscar')
+    page = flask.request.args.get('page', 1, type=int)
+    rol = flask.request.args.get('rol')
+    activo = flask.request.args.get('activo')
+    buscar = flask.request.args.get('buscar')
     
     query = User.query
     
@@ -39,14 +41,13 @@ def index():
     query = query.order_by(User.fecha_creacion.desc())
     
     # Paginar
-    from flask import current_app
     pagination = query.paginate(
         page=page,
         per_page=current_app.config['ITEMS_PER_PAGE'],
         error_out=False
     )
     
-    return render_template('usuarios/index.html',
+    return flask.render_template('usuarios/index.html',
                          usuarios=pagination.items,
                          pagination=pagination,
                          rol=rol,
@@ -59,28 +60,28 @@ def index():
 @admin_required
 def crear():
     """Crear nuevo usuario"""
-    if request.method == 'POST':
+    if flask.request.method == 'POST':
         try:
-            nombre = request.form.get('nombre', '').strip()
-            email = request.form.get('email', '').strip().lower()
-            password = request.form.get('password', '')
-            rol = request.form.get('rol', 'usuario')
-            telefono = request.form.get('telefono', '').strip()
-            departamento = request.form.get('departamento', '').strip()
-            cargo = request.form.get('cargo', '').strip()
+            nombre = flask.request.form.get('nombre', '').strip()
+            email = flask.request.form.get('email', '').strip().lower()
+            password = flask.request.form.get('password', '')
+            rol = flask.request.form.get('rol', 'usuario')
+            telefono = flask.request.form.get('telefono', '').strip()
+            departamento = flask.request.form.get('departamento', '').strip()
+            cargo = flask.request.form.get('cargo', '').strip()
             
             # Validaciones
             if not all([nombre, email, password]):
-                flash('Nombre, email y contraseña son obligatorios', 'error')
-                return redirect(url_for('usuarios.crear'))
+                flask.flash('Nombre, email y contraseña son obligatorios', 'error')
+                return flask.redirect(flask.url_for('usuarios.crear'))
             
             if len(password) < 8:
-                flash('La contraseña debe tener al menos 8 caracteres', 'error')
-                return redirect(url_for('usuarios.crear'))
+                flask.flash('La contraseña debe tener al menos 8 caracteres', 'error')
+                return flask.redirect(flask.url_for('usuarios.crear'))
             
             if User.query.filter_by(email=email).first():
-                flash('Ya existe un usuario con ese email', 'error')
-                return redirect(url_for('usuarios.crear'))
+                flask.flash('Ya existe un usuario con ese email', 'error')
+                return flask.redirect(flask.url_for('usuarios.crear'))
             
             # Crear usuario
             usuario = User(
@@ -98,112 +99,116 @@ def crear():
             db.session.add(usuario)
             db.session.commit()
             
-            flash(f'Usuario {nombre} creado exitosamente', 'success')
-            return redirect(url_for('usuarios.index'))
+            flask.flash(f'Usuario {nombre} creado exitosamente', 'success')
+            return flask.redirect(flask.url_for('usuarios.index'))
             
         except Exception as e:
             db.session.rollback()
-            flash(f'Error al crear usuario: {str(e)}', 'error')
+            flask.flash(f'Error al crear usuario: {str(e)}', 'error')
     
-    return render_template('usuarios/crear.html')
+    return flask.render_template('usuarios/crear.html')
 
 
 @usuarios_bp.route('/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
 @admin_required
+@demo_readonly 
 def editar(id):
     """Editar usuario"""
     usuario = User.query.get_or_404(id)
     
-    if request.method == 'POST':
+    if flask.request.method == 'POST':
         try:
-            usuario.nombre = request.form.get('nombre', usuario.nombre).strip()
-            email = request.form.get('email', usuario.email).strip().lower()
-            usuario.rol = request.form.get('rol', usuario.rol)
-            usuario.telefono = request.form.get('telefono', '').strip()
-            usuario.departamento = request.form.get('departamento', '').strip()
-            usuario.cargo = request.form.get('cargo', '').strip()
+            usuario.nombre = flask.request.form.get('nombre', usuario.nombre).strip()
+            email = flask.request.form.get('email', usuario.email).strip().lower()
+            usuario.rol = flask.request.form.get('rol', usuario.rol)
+            usuario.telefono = flask.request.form.get('telefono', '').strip()
+            usuario.departamento = flask.request.form.get('departamento', '').strip()
+            usuario.cargo = flask.request.form.get('cargo', '').strip()
             
             # Verificar si el email ya existe (excepto el actual)
             if email != usuario.email:
                 if User.query.filter_by(email=email).first():
-                    flash('Ya existe un usuario con ese email', 'error')
-                    return redirect(url_for('usuarios.editar', id=id))
+                    flask.flash('Ya existe un usuario con ese email', 'error')
+                    return flask.redirect(flask.url_for('usuarios.editar', id=id))
                 usuario.email = email
             
             # Cambiar contraseña si se proporcionó
-            new_password = request.form.get('new_password', '').strip()
+            new_password = flask.request.form.get('new_password', '').strip()
             if new_password:
                 if len(new_password) < 8:
-                    flash('La contraseña debe tener al menos 8 caracteres', 'error')
-                    return redirect(url_for('usuarios.editar', id=id))
+                    flask.flash('La contraseña debe tener al menos 8 caracteres', 'error')
+                    return flask.redirect(flask.url_for('usuarios.editar', id=id))
                 usuario.set_password(new_password)
             
             db.session.commit()
             
-            flash(f'Usuario {usuario.nombre} actualizado exitosamente', 'success')
-            return redirect(url_for('usuarios.index'))
+            flask.flash(f'Usuario {usuario.nombre} actualizado exitosamente', 'success')
+            return flask.redirect(flask.url_for('usuarios.index'))
             
         except Exception as e:
             db.session.rollback()
-            flash(f'Error al actualizar usuario: {str(e)}', 'error')
+            flask.flash(f'Error al actualizar usuario: {str(e)}', 'error')
     
-    return render_template('usuarios/editar.html', usuario=usuario)
+    return flask.render_template('usuarios/editar.html', usuario=usuario)
 
 
 @usuarios_bp.route('/<int:id>/toggle-estado', methods=['POST'])
 @login_required
 @admin_required
+@demo_readonly 
 def toggle_estado(id):
     """Activar/Desactivar usuario"""
     usuario = User.query.get_or_404(id)
     
     # No permitir desactivar al propio usuario
     if usuario.id == current_user.id:
-        flash('No puedes desactivar tu propia cuenta', 'error')
-        return redirect(url_for('usuarios.index'))
+        flask.flash('No puedes desactivar tu propia cuenta', 'error')
+        return flask.redirect(flask.url_for('usuarios.index'))
     
     try:
         usuario.activo = not usuario.activo
         db.session.commit()
         
         estado = 'activado' if usuario.activo else 'desactivado'
-        flash(f'Usuario {usuario.nombre} {estado} exitosamente', 'success')
+        flask.flash(f'Usuario {usuario.nombre} {estado} exitosamente', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al cambiar estado: {str(e)}', 'error')
+        flask.flash(f'Error al cambiar estado: {str(e)}', 'error')
     
-    return redirect(url_for('usuarios.index'))
+    return flask.redirect(flask.url_for('usuarios.index'))
 
 
 @usuarios_bp.route('/<int:id>/eliminar', methods=['POST'])
 @login_required
 @admin_required
+@demo_readonly 
 def eliminar(id):
     """Eliminar usuario"""
     usuario = User.query.get_or_404(id)
     
     # No permitir eliminar al propio usuario
     if usuario.id == current_user.id:
-        flash('No puedes eliminar tu propia cuenta', 'error')
-        return redirect(url_for('usuarios.index'))
+        flask.flash('No puedes eliminar tu propia cuenta', 'error')
+        return flask.redirect(flask.url_for('usuarios.index'))
     
     try:
         nombre = usuario.nombre
         db.session.delete(usuario)
         db.session.commit()
         
-        flash(f'Usuario {nombre} eliminado exitosamente', 'success')
+        flask.flash(f'Usuario {nombre} eliminado exitosamente', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al eliminar usuario: {str(e)}', 'error')
+        flask.flash(f'Error al eliminar usuario: {str(e)}', 'error')
     
-    return redirect(url_for('usuarios.index'))
+    return flask.redirect(flask.url_for('usuarios.index'))
 
 
 @usuarios_bp.route('/<int:id>')
 @login_required
 @admin_required
+@demo_readonly 
 def detalle(id):
     """Ver detalle de usuario"""
     usuario = User.query.get_or_404(id)
@@ -215,11 +220,9 @@ def detalle(id):
     rendiciones_pendientes = usuario.rendiciones.filter_by(estado='pendiente').count()
     
     # Monto total de rendiciones aprobadas
-    from sqlalchemy import func
-    from models import Rendicion
     
     monto_total = db.session.query(
-        func.sum(Rendicion.monto_aprobado)
+        sqlalchemy.func.sum(Rendicion.monto_aprobado)
     ).filter(
         Rendicion.usuario_id == usuario.id,
         Rendicion.estado.in_(['aprobada', 'pagada'])
@@ -238,7 +241,7 @@ def detalle(id):
         'monto_total': float(monto_total)
     }
     
-    return render_template('usuarios/detalle.html',
+    return flask.render_template('usuarios/detalle.html',
                          usuario=usuario,
                          stats=stats,
                          rendiciones_recientes=rendiciones_recientes)
@@ -247,10 +250,11 @@ def detalle(id):
 @usuarios_bp.route('/api/check-email')
 @login_required
 @admin_required
+@demo_readonly 
 def check_email():
     """API para verificar si un email ya existe"""
-    email = request.args.get('email', '').strip().lower()
-    user_id = request.args.get('user_id', type=int)
+    email = flask.request.args.get('email', '').strip().lower()
+    user_id = flask.request.args.get('user_id', type=int)
     
     query = User.query.filter_by(email=email)
     
@@ -260,4 +264,5 @@ def check_email():
     
     existe = query.first() is not None
     
-    return jsonify({'existe': existe})
+    return flask.jsonify({'existe': existe})
+

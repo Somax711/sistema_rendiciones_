@@ -5,7 +5,6 @@ from werkzeug.security import generate_password_hash
 import secrets
 from models import db, User
 from utils.email import send_email
-import pyotp
 import qrcode
 import io
 import base64
@@ -258,3 +257,21 @@ def perfil():
         return redirect(url_for('auth.perfil'))
     
     return render_template('auth/perfil.html', user=current_user)
+
+# ─── DEMO LOGIN ───────
+@auth_bp.route('/demo-login')
+def demo_login():
+    """Login automático con usuario demo de solo lectura"""
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard.index'))
+
+    demo = User.query.filter_by(email='demo@primar.cl').first()
+    if not demo:
+        flash('Usuario demo no disponible. Contacta al administrador.', 'warning')
+        return redirect(url_for('auth.login'))
+
+    login_user(demo, remember=False)
+    session['demo_mode'] = True         
+    session.permanent = False            
+    flash('Estás usando la versión demo — modo solo lectura.', 'info')
+    return redirect(url_for('dashboard.index'))
