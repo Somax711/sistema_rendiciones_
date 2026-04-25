@@ -1,5 +1,6 @@
 from app import _seed_demo_user, create_app
 from models import db, User
+from app import app, db
 
 
 def init_database():
@@ -38,6 +39,13 @@ def init_database():
         
         print("\n✓ Base de datos inicializada correctamente")
         print("Puedes iniciar la aplicación con: python app.py")
+
+
+
+with app.app_context():
+    print("Creando tablas en la base de datos...")
+    db.create_all()
+    print("¡Tablas creadas!")
 
 
 if __name__ == '__main__':
